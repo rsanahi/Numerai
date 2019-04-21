@@ -10,7 +10,7 @@ from sklearn.model_selection import KFold, cross_val_score
 
 from model_selection import KFoldEra
 
-import time, click, warnings
+import time, click, warnings, os
 
 plt.style.use('bmh')
 plt.rcParams['figure.figsize'] = (10, 10)
@@ -67,6 +67,8 @@ def train_predict(PATH,n_round):
     pca = PCA(n_components=2,random_state=123)
 
     for target in targets:
+        name  = target.split('target_')[1]
+        print(name)
         components = pca.fit_transform(raw_train[features],raw_train[target])
         components_valid = pca.transform(validation[features])
         components = pd.DataFrame(components,columns=['feature_PCA_1','feature_PCA_2'])
@@ -82,7 +84,12 @@ def train_predict(PATH,n_round):
         model.fit(df[features2],raw_train[target])
         print('Fit: {}s'.format(time.time() - start_time))
 
-        compute_statistics(df_valid,target,model.predict_proba(df_valid[features2])[:,1])
+        error_valid, auc_valid, consistency_valid, _ = compute_statistics(
+            df_valid,target,model.predict_proba(df_valid[features2])[:,1])
+        
+        _.to_csv(f"{PATH}/{name}_statistics.csv", index=False)
+        
+        print_statistics(error_valid, auc_valid, consistency_valid, dataset="valid")
 
         components_tournament = pca.fit_transform(raw_test[features],raw_test[target])
         components_tournament = pd.DataFrame(components_tournament,columns=['feature_PCA_1','feature_PCA_2'])
@@ -91,7 +98,6 @@ def train_predict(PATH,n_round):
         yhat = model.predict_proba(tournament[features2])[:,1]
 
         print("# Creating submission...")
-        name  = target.split('target_')[1]
         results_df = pd.DataFrame(data={f'probability_{name}':yhat})
         joined = pd.DataFrame(ids).join(results_df)
 
@@ -104,8 +110,10 @@ def train_predict(PATH,n_round):
 @click.argument("n_round")
 
 def main(n_round):
-    PATH = f'../submission/round {round}/PCA'
+    PATH = f'../submission/round {n_round}/PCA'
+    os.makedirs(exist_ok=True, name=PATH)
     result = train_predict(PATH,n_round)
+    print(result)
 
 
 if __name__ == "__main__":
