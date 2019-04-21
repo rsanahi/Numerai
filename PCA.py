@@ -18,6 +18,7 @@ title_config = {'fontsize': 20, 'y': 1.05}
 warnings.filterwarnings('ignore')
 
 def compute_consistency(val, target, yhat, upper_bound=0.693):
+    """ compute the logloss and auc for eras """
     errors = []
     auc = []
     new_val = val
@@ -34,7 +35,7 @@ def compute_consistency(val, target, yhat, upper_bound=0.693):
     return errors
 
 def compute_statistics(df, target, yhat):
-    """ compute logloss, auc, and consistency between variables"""
+    """ compute logloss, auc, and consistency between variables """
     y = df[target].values
     loss = log_loss(y, yhat)
     auc = roc_auc_score(y, yhat)
@@ -54,6 +55,7 @@ def load_data( n_round):
     return df_train, df_test
 
 def train_predict(PATH,n_round):
+    """ Make predictions for target """
     print(f"Working with round: {n_round}")
     raw_train, raw_test = load_data(n_round)
     validation = raw_test[raw_test.data_type == 'validation']
