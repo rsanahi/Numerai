@@ -192,7 +192,7 @@ def make_predictions(roundd,PATH):
         lg_valid = log_loss(y_valid, clf.predict(validation[features]))
 
         error_valid, auc_valid, consistency_valid, _ = compute_statistics(
-            validation.predict(validation[features]))
+            validation,target,clf.predict(validation[features]))
         
         print_statistics(error_valid, auc_valid, consistency_valid, dataset="valid")
         
