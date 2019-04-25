@@ -228,13 +228,13 @@ def make_predictions(roundd,PATH):
     return 'Submissions Done!'
 
 @click.command()
-@click.option("--round", help="Number of round.")
+@click.option("--n_round", help="Number of round.")
 
 def tournament_(n_round):
         print(f'hola {n_round}')
         PATH = f'../submission/round {n_round}/LGBM'
         os.makedirs(exist_ok=True, name=PATH)
-        result = make_predictions(round,PATH)
+        result = make_predictions(n_round,PATH)
         print(result)
 
 if __name__ == '__main__':
