@@ -192,7 +192,7 @@ def make_predictions(roundd,PATH):
         lg_valid = log_loss(y_valid, clf.predict(validation[features]))
 
         error_valid, auc_valid, consistency_valid, _ = compute_statistics(
-            df_valid,target,model.predict(validation[features]))
+            validation.predict(validation[features]))
         
         print_statistics(error_valid, auc_valid, consistency_valid, dataset="valid")
         
@@ -230,9 +230,9 @@ def make_predictions(roundd,PATH):
 @click.command()
 @click.option("--round", help="Number of round.")
 
-def tournament_(round):
-        print(f'hola {round}')
-        PATH = f'../submission/round {round}/LGBM'
+def tournament_(n_round):
+        print(f'hola {n_round}')
+        PATH = f'../submission/round {n_round}/LGBM'
         os.makedirs(exist_ok=True, name=PATH)
         result = make_predictions(round,PATH)
         print(result)
