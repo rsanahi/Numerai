@@ -3,7 +3,7 @@ import lightgbm as lgbm
 import pandas as pd
 import numpy as np
 from sklearn.metrics import confusion_matrix,accuracy_score,log_loss
-
+from sklearn import metrics
 
 import matplotlib.pyplot as plt
 plt.style.use('fivethirtyeight')
@@ -13,8 +13,8 @@ np.random.seed(42)
 class MYLGBM():
 
     def __init__(self):
-        self.params = {'learning_rate': 0.04,
-                        'num_leaves': 3,
+        self.params = {'learning_rate': 0.05,
+                        'num_leaves': 9,
                         'metric':'auc',
                         'boost_from_average':'false',
                         'feature_fraction': 1.0,
@@ -74,6 +74,35 @@ def check_consistency(model,valid_data,featu,target):
     print ("Consistency: "+str(count_consistent/count))
     return loglossssssss,(count_consistent/count)
 
+def compute_consistency(val, target, yhat, upper_bound=0.693):
+    """ compute the logloss and auc for eras """
+    errors = []
+    auc = []
+    new_val = val
+    val_eras = new_val.era.unique().tolist()
+    y_val = val[target].values
+    for era in val_eras:
+        idx = (new_val.era == era).values
+        errors.append(metrics.log_loss(y_val[idx], yhat[idx]))
+        auc.append(metrics.roc_auc_score(y_val[idx], yhat[idx]))
+
+    errors = pd.DataFrame({'era': val_eras, 'error': errors,'auc':auc})
+    errors['upper'] = upper_bound
+    errors['consistency'] = errors.error < errors.upper
+    return errors
+def compute_statistics(df, target, yhat):
+    """ compute logloss, auc, and consistency between variables """
+    y = df[target].values
+    loss = log_loss(y, yhat)
+    auc = roc_auc_score(y, yhat)
+    errors = compute_consistency(df, target, yhat)
+    consistency = errors.consistency.mean()
+    # returning errors in case you want to plot
+    return loss, auc, consistency, errors
+
+def print_statistics(loss, auc, c, dataset="val"):
+    s = f"Error in {dataset} -> (loss, auc, consistency): ({loss:.6f},{auc:0.6f}, {c:.6f})"
+    print(s)
 
 def make_plot(plot_info,targets,PATH):
     fig, ((ax1, ax2)) = plt.subplots(nrows=2, ncols=1, figsize = (15,10))
@@ -139,7 +168,6 @@ def make_predictions(roundd,PATH):
     validation = tournament[tournament.data_type == 'validation']
     features = [f for f in list(train) if 'feature' in f]
     x_prediction = tournament[features]
-    x_valid = validation[features]
     X = train[features]
     
     train_, test_ = split_v2(train)
@@ -161,7 +189,12 @@ def make_predictions(roundd,PATH):
         print('Computing logloss')
         lg_train = log_loss(train_labels,clf.predict(train_features))
         lg_test = log_loss(test_labels,clf.predict(test_features))
-        lg_valid = log_loss(y_valid, clf.predict(x_valid))
+        lg_valid = log_loss(y_valid, clf.predict(validation[features]))
+
+        error_valid, auc_valid, consistency_valid, _ = compute_statistics(
+            df_valid,target,model.predict(validation[features]))
+        
+        print_statistics(error_valid, auc_valid, consistency_valid, dataset="valid")
         
         print('# Checking consistency')
         ceras,cv= check_consistency(clf,validation,features,target)
