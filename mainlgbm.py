@@ -2,7 +2,7 @@ import click, os, time
 import lightgbm as lgbm
 import pandas as pd
 import numpy as np
-from sklearn.metrics import confusion_matrix,accuracy_score,log_loss
+from sklearn.metrics import confusion_matrix,accuracy_score,log_loss, roc_auc_score
 from sklearn import metrics
 
 import matplotlib.pyplot as plt
