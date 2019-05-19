@@ -13,14 +13,23 @@ np.random.seed(42)
 class MYLGBM():
 
     def __init__(self):
-        self.params = {'learning_rate': 0.05,
-                        'num_leaves': 9,
-                        'metric':'auc',
-                        'boost_from_average':'false',
-                        'feature_fraction': 1.0,
-                        'max_depth': -1,
-                        'objective': 'binary',
-                        'verbosity': -10}
+        self.params = {
+            'bagginf_freq':5,
+            'bagging_fraction':0.9,
+            'boost_from_average':'false',
+            'colsample_bytree':0.12,
+            'boost':'gbdt',
+            'learning_rate': 0.05,
+            'min_data_in_leaf':5,
+            'min_sum_hessian_in_leaf':1.0,
+            'num_leaves': 9,
+            'num_threads':4,
+            'metric':'auc',
+            'feature_fraction': 1.0,
+            'max_depth': -1,
+            'lambda_l2':0.001,
+            'objective': 'binary',
+            'verbosity': 0}
     
     def get_parametros(self):
         return self.params
