@@ -68,7 +68,6 @@ def train_predict(PATH,n_round):
 
     for target in targets:
         name  = target.split('target_')[1]
-        print(name)
         components = pca.fit_transform(raw_train[features],raw_train[target])
         components_valid = pca.transform(validation[features])
         components = pd.DataFrame(components,columns=['feature_PCA_1','feature_PCA_2'])
