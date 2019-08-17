@@ -12,9 +12,11 @@ set_random_seed(2)
 def load_data(n_round, save=True):
     print("Reading normal data")
     if save: 
+        print('Loading train data')
         df_train = pd.read_csv(f'../../../raw_data/round {n_round}/numerai_training_data.csv', header=0)
         features = [c for c in df_train if c.startswith("feature")]
         save_memo(df_train, features)
+        print('Loading tournament data')
         df_test = pd.read_csv(f'../../../raw_data/round {n_round}/numerai_tournament_data.csv',header = 0)
         save_memo(df_test, features)
     return df_train, df_test, features
