@@ -3,7 +3,7 @@ from keras import models
 from keras import layers
 from keras import regularizers, optimizers
 
-def autoencoder_(input_size, hidden_size, code_size):
+def autoencoder_(input_size, hidden_size=64, code_size=32):
     input_data = layers.Input(shape=(input_size,))
     hidden_1 = layers.Dense(hidden_size, activation='relu')(input_data)
     code = layers.Dense(code_size, activation='relu')(hidden_1)

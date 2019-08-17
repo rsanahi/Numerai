@@ -43,7 +43,7 @@ def split_v2(train, verbose, size_test=40):
     trainn = train[train.era.isin(tr)]
     return trainn,test,tst,tr
 
-def plot_history(history, keys=['loss'], title='epochs',path='/'):
+def plot_history(history, keys=['loss'], title='',path='/'):
     n = len(keys)
     epochs = [i for i in range(len(history['loss']))]
     plt.figure(figsize=(15, 6))
@@ -52,6 +52,6 @@ def plot_history(history, keys=['loss'], title='epochs',path='/'):
         plt.plot(epochs, history[keys[i]], label=keys[i])
         plt.plot(epochs, history[f'val_{keys[i]}'], label=f'val_{keys[i]}')
         plt.legend()
-        ax.set_title(title)
-    plt.savefig(f'{path}/history')
+        ax.set_title(f'{keys[i]}')
+    plt.savefig(f'{path}/{title_}history')
     plt.show()

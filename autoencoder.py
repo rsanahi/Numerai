@@ -26,7 +26,7 @@ def train_and_predict(PATH,n_round):
     code_size = 32
 
     neuronal_network = nn_model()
-    autoencoder = autoencoder_()
+    autoencoder = autoencoder_(input_size=input_size, hidden_size=hidden_size, code_size=code_size)
     history = autoencoder.fit(train_features, train_features, epochs=10, batch_size=1024, validation_data=(test_features, test_features))
     his = history.history
     plot_history(his,['loss', 'mean_absolute_error'],title=f'autoencoder {n_round}', path=PATH)
@@ -42,7 +42,7 @@ def train_and_predict(PATH,n_round):
     validation_data = tournament_data[tournament_data.data_type == "validation"]
     validation_correlations = validation_data.groupby("era").apply(score)
 
-    tournament_data[PREDICTION_NAME].to_csv(TOURNAMENT_NAME + "_submission.csv")
+    tournament_data[PREDICTION_NAME].to_csv(PATH + TOURNAMENT_NAME + "_submission.csv")
 
     return 'Done!'
 
