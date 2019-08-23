@@ -55,5 +55,5 @@ def plot_history(history, keys=['loss'], title='',path='/'):
         plt.plot(epochs, history[f'val_{keys[i]}'], label=f'val_{keys[i]}')
         plt.legend()
         ax.set_title(f'{keys[i]}')
-    plt.savefig(f'{path}/{title_}history')
+    plt.savefig(f'{path}/{title}history')
     plt.show()
