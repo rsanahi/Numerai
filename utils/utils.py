@@ -57,3 +57,52 @@ def plot_history(history, keys=['loss'], title='',path='/'):
         ax.set_title(f'{keys[i]}')
     plt.savefig(f'{path}/{title}history')
     plt.show()
+
+def numerai_score(y_true, y_pred, eras):
+    rank_pred = y_pred.groupby(eras).apply(lambda x: x.rank(pct=True, method="first"))
+    return np.corrcoef(y_true, rank_pred)[0,1]
+
+def correlation_score(y_true, y_pred):
+    return np.corrcoef(y_true, y_pred)[0,1]
+
+def score(y_true,y_pred):
+    # method="first" breaks ties based on order in array
+    return np.corrcoef(y_true,y_pred.rank(pct=True, method="first"))[0,1]
+
+def basic_plot(x,xlabel='x',ylabel='y',title='basic plot', margin=[0.02],save=False,path='/'):
+    y = [n for n in range(len(x))]
+    
+    for m in margin:
+        plt.plot(y, [m for x in y])
+    plt.plot(y,x,marker='o')
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    if save:
+        plt.savefig(f'{path}/{title[0]}_history.png')
+    plt.show()
+
+def check_correlation_consistency(model,valid_data, metric, features, target, verbose=0):
+    eras = valid_data.era.unique()
+    count = 0
+    count_consistent = 0
+    metric_val = []
+    for era in eras:
+        count += 1
+        current_valid_data = valid_data[valid_data.era==era]
+        X_valid = current_valid_data[features]
+        Y_valid = current_valid_data[target]
+        y_prediction = model.predict(X_valid)
+        probabilities = y_prediction
+        m = metric(Y_valid, probabilities)
+        metric_val.append(m)
+        if (m > 0.02):
+            consistent = True
+            count_consistent += 1
+        else:
+            consistent = False
+        if verbose:
+            print(str(era),": loss - "+str(m), "consistent: "+str(consistent))
+    print (f"Consistency {count_consistent}/{count}: {count_consistent/count}")
+    print(f'{count_consistent} de {count}')
+    return metric_val,(count_consistent/count)
