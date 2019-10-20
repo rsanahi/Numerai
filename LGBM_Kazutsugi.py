@@ -26,7 +26,7 @@ def train_and_predict(PATH,n_round):
         'colsample_bytree':0.12,
         'boost':'gbdt',
         'learning_rate': 0.05,
-        'min_sum_hessian_in_leaf':1.0,
+        'min_sum_hessian_in_leaf':0.1,
         'num_leaves': 9,
         'num_threads':4,
         'metric':'mae',

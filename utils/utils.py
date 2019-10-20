@@ -1,8 +1,10 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import gc
 from pylab import rcParams
-
+from sklearn.decomposition import PCA, non_negative_factorization
+from sklearn.preprocessing import MaxAbsScaler, MinMaxScaler, KBinsDiscretizer
 from numpy.random import seed
 from tensorflow import set_random_seed
 seed(1)
@@ -106,3 +108,15 @@ def check_correlation_consistency(model,valid_data, metric, features, target, ve
     print (f"Consistency {count_consistent}/{count}: {count_consistent/count}")
     print(f'{count_consistent} de {count}')
     return metric_val,(count_consistent/count)
+
+def PCA_preprosessing(X, feature_groups, features):
+    pca = PCA(n_components=2)
+    all_components = pd.DataFrame(pca.fit_transform(X[features]))
+    for group in feature_groups:
+        print(group)
+        components = pd.DataFrame(pca.fit_transform(X[feature_groups[group]]))
+        components = components.add_prefix(f'{group}_')
+        all_data = components
+        all_components = pd.concat([all_components, components],axis=1)
+    
+    return all_components
