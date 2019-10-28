@@ -5,6 +5,9 @@ from keras import regularizers, optimizers
 from keras.models import Model, load_model, Sequential
 from keras.layers import Input, Add, Dense, Activation, BatchNormalization, Dropout
 from keras.optimizers import SGD, RMSprop, Adam
+from sklearn.metrics import mean_absolute_error, r2_score
+from keras.layers.advanced_activations import LeakyReLU, ReLU, PReLU
+from keras.callbacks import Callback,ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 
 def autoencoder_(X,input_size, hidden_size=64, code_size=50):
     input_data = Input(shape=(310,))

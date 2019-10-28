@@ -5,23 +5,44 @@ import gc
 from pylab import rcParams
 from sklearn.decomposition import PCA, non_negative_factorization
 from sklearn.preprocessing import MaxAbsScaler, MinMaxScaler, KBinsDiscretizer
+from sklearn.model_selection import KFold
 from numpy.random import seed
 from tensorflow import set_random_seed
 seed(1)
 set_random_seed(2)
 
 
-def load_data(n_round, save=True):
+def load_data(n_round, save=True, with_preprosessing=False):
     print("Reading normal data")
+    data_train_name = "numerai_training_data.csv"
+    data_tournament_name = "numerai_tournament_data.csv"
+
     if save: 
         print('Loading train data')
-        df_train = pd.read_csv(f'../../../raw_data/round {n_round}/numerai_training_data.csv', header=0)
+        df_train = pd.read_csv(f'../../../raw_data/round {n_round}/{data_train_name}', header=0)
         features = [c for c in df_train if c.startswith("feature")]
         save_memo(df_train, features)
         print('Loading tournament data')
-        df_test = pd.read_csv(f'../../../raw_data/round {n_round}/numerai_tournament_data.csv',header = 0)
+        df_test = pd.read_csv(f'../../../raw_data/round {n_round}/{data_tournament_name}',header = 0)
         save_memo(df_test, features)
     return df_train, df_test, features
+
+def load_proses_data(n_round, feather=True, preprocessing=False):
+    data_train_name = "numerai_training_preprosessing_data.csv"
+    data_tournament_name = "numerai_tournament_preprosessing_data.csv"
+    if feather:
+        print("Reading Normal(feather) Data")
+        df = pd.read_feather(f"../../../raw_data/round {n_round}/train-tmp")
+        tournament = pd.read_feather(f"../../../raw_data/round {n_round}/tournament-tmp")
+        features = [c for c in df if c.startswith("feature")]
+        return df, tournament, features
+    
+    elif preprocessing:
+        print("Reading Proses data")
+        df = pd.read_csv(f'../../../raw_data/round {n_round}/{data_train_name}', header=0)
+        tournament = pd.read_csv(f'../../../raw_data/round {n_round}/{data_tournament_name}',header = 0)
+        features = [c for c in df if c.startswith("feature")]
+        return df, tournament, features
 
 def save_memo(data,features):
     for column in features:
@@ -109,9 +130,13 @@ def check_correlation_consistency(model,valid_data, metric, features, target, ve
     print(f'{count_consistent} de {count}')
     return metric_val,(count_consistent/count)
 
-def PCA_preprosessing(X, feature_groups, features):
-    pca = PCA(n_components=2)
-    all_components = pd.DataFrame(pca.fit_transform(X[features]))
+def PCA_preprosessing(X, feature_groups, features, pca=None):
+    if pca:
+        pca = pca
+    else:
+        pca = PCA(n_components=2)
+        pca = pca.fit_transform(X[features])
+    all_components = pd.DataFrame(pca.ftransform(X[features]))
     for group in feature_groups:
         print(group)
         components = pd.DataFrame(pca.fit_transform(X[feature_groups[group]]))
@@ -119,4 +144,4 @@ def PCA_preprosessing(X, feature_groups, features):
         all_data = components
         all_components = pd.concat([all_components, components],axis=1)
     
-    return all_components
+    return all_components, pca
