@@ -2,15 +2,13 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import gc
+import tensorflow
 from pylab import rcParams
 from sklearn.decomposition import PCA, non_negative_factorization
 from sklearn.preprocessing import MaxAbsScaler, MinMaxScaler, KBinsDiscretizer
 from sklearn.model_selection import KFold
-from numpy.random import seed
-from tensorflow import set_random_seed
-seed(1)
-set_random_seed(2)
 
+tensorflow.random.set_seed(1234)
 
 def load_data(n_round, save=True, with_preprosessing=False):
     print("Reading normal data")
@@ -132,16 +130,19 @@ def check_correlation_consistency(model,valid_data, metric, features, target, ve
 
 def PCA_preprosessing(X, feature_groups, features, pca=None):
     if pca:
-        pca = pca
+        pca_ = pca
+        data = pca_.transform(X[features])
     else:
-        pca = PCA(n_components=2)
-        pca = pca.fit_transform(X[features])
-    all_components = pd.DataFrame(pca.ftransform(X[features]))
+        pca_ = PCA(n_components=2)
+        pca_ = pca_.fit(X[features])
+        data = pca_.transform(X[features])
+    all_components = pd.DataFrame(data)
+    all_components = all_components.add_prefix('feature_PCA_')
     for group in feature_groups:
+        pca = PCA(n_components=2)
         print(group)
         components = pd.DataFrame(pca.fit_transform(X[feature_groups[group]]))
         components = components.add_prefix(f'{group}_')
-        all_data = components
         all_components = pd.concat([all_components, components],axis=1)
     
-    return all_components, pca
+    return all_components, pca_

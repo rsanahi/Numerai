@@ -7,14 +7,13 @@ from utils.models import *
 def make_preprosessing(PATH,n_round):
     print(f"Working with round: {n_round}")
     train_data, tournament_data, features = load_data(n_round)
-    train_ids = train_data.id
 
     feature_groups = {
         g: [c for c in train_data if c.startswith(f"feature_{g}")]
         for g in ["intelligence", "wisdom", "charisma", "dexterity", "strength", "constitution"]
         }
     train_data.to_feather(f'../../../raw_data/round {n_round}/train-tmp')
-    tournament_data(f"../../../raw_data/round {n_round}/tournament-tmp")
+    tournament_data.to_feather(f"../../../raw_data/round {n_round}/tournament-tmp")
 
     del tournament_data
     gc.collect()
@@ -54,6 +53,7 @@ def make_preprosessing(PATH,n_round):
     print("Saving train data with preprosessing")
     df.to_csv(f'../../../raw_data/round {n_round}/numerai_training_preprosessing_data.csv')
 
+    del df
     del train_data
     gc.collect()
 
