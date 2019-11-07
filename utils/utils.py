@@ -15,7 +15,7 @@ def load_data(n_round, save=True, with_preprosessing=False):
     data_train_name = "numerai_training_data.csv"
     data_tournament_name = "numerai_tournament_data.csv"
 
-    if save: 
+    if save:
         print('Loading train data')
         df_train = pd.read_csv(f'../../../raw_data/round {n_round}/{data_train_name}', header=0)
         features = [c for c in df_train if c.startswith("feature")]
@@ -34,7 +34,7 @@ def load_proses_data(n_round, feather=True, preprocessing=False):
         tournament = pd.read_feather(f"../../../raw_data/round {n_round}/tournament-tmp")
         features = [c for c in df if c.startswith("feature")]
         return df, tournament, features
-    
+
     elif preprocessing:
         print("Reading Proses data")
         df = pd.read_csv(f'../../../raw_data/round {n_round}/{data_train_name}', header=0)
@@ -92,7 +92,7 @@ def score(y_true,y_pred):
 
 def basic_plot(x,xlabel='x',ylabel='y',title='basic plot', margin=[0.02],save=False,path='/'):
     y = [n for n in range(len(x))]
-    
+
     for m in margin:
         plt.plot(y, [m for x in y])
     plt.plot(y,x,marker='o')
@@ -114,7 +114,7 @@ def check_correlation_consistency(model,valid_data, metric, features, target, ve
         X_valid = current_valid_data[features]
         Y_valid = current_valid_data[target]
         y_prediction = model.predict(X_valid)
-        probabilities = y_prediction
+        probabilities = y_prediction[:, 0]
         m = metric(Y_valid, probabilities)
         metric_val.append(m)
         if (m > 0.02):
@@ -144,5 +144,5 @@ def PCA_preprosessing(X, feature_groups, features, pca=None):
         components = pd.DataFrame(pca.fit_transform(X[feature_groups[group]]))
         components = components.add_prefix(f'{group}_')
         all_components = pd.concat([all_components, components],axis=1)
-    
+
     return all_components, pca_
