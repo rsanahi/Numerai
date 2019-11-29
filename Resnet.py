@@ -14,11 +14,12 @@ def identity_block(X, hidden_layers=1):
 
 def linear_block(X, hidden_layers=1):
 
-    X_shortcut = X
-    X = Dense(hidden_layers)(X_shortcut)
-    X = PReLU()(X)
+    X = Dense(hidden_layers)(X)
+    X = ReLU()(X)
     X = BatchNormalization()(X)
-    X = Dropout(0.1)(X)
+    X = Dense(hidden_layers)(X)
+    X = ReLU()(X)
+    X = BatchNormalization()(X)
 
     return X
 
@@ -58,9 +59,9 @@ def ResNet(input_shape = (310,), layers=[310,100,50,25], classes=1):
 
     return model
 
-def train_model(X_train, y_train, X_val, y_val):
+def train_model(X_train, y_train, X_val, y_val, layers):
     opt = Adam(lr=0.001)
-    model = ResNet(input_shape=(X_train.shape[1],))
+    model = ResNet(input_shape=(X_train.shape[1],), layers=layers)
     model.compile(optimizer=RMSprop(learning_rate=0.003, decay = 1e-4), loss='mse')
     er = EarlyStopping(patience=15, min_delta=1e-4, restore_best_weights=True, monitor='val_loss')
     model.fit(X_train, y_train, epochs=10, callbacks=[er], validation_data=[X_val, y_val], batch_size=1024)
@@ -69,7 +70,7 @@ def train_model(X_train, y_train, X_val, y_val):
 def make_predictions(PATH,n_round,with_preprosessing=False):
     pre = "whit" if with_preprosessing else "without"
     print(f"Working with round: {n_round}")
-    train_data, tournament_data, features = load_proses_data(n_round)
+    train_data, tournament_data, features = load_proses_data(n_round, preprocessing=with_preprosessing)
     validation_data = tournament_data[tournament_data.data_type == "validation"]
     ids = tournament_data['id']
 
@@ -89,11 +90,16 @@ def make_predictions(PATH,n_round,with_preprosessing=False):
     y_pred_val = []
     y_pred_tournament = []
 
+    if with_preprosessing:
+        layers=[64,50,35,20]
+    else:
+        layers=[310,100,50,25] 
+
     for tr_idx, vl_idx in kf.split(X_train, y_train):
         x_tr, y_tr = X_train.iloc[tr_idx], y_train.iloc[tr_idx]
         x_vl, y_vl = X_train.iloc[vl_idx], y_train.iloc[vl_idx]
 
-        model = train_model(x_tr, y_tr, x_vl, y_vl)
+        model = train_model(x_tr, y_tr, x_vl, y_vl, layers)
         y_hat = model.predict(x_vl)[:, 0]
         y_hat_val = model.predict(X_test)[:, 0]
         y_hat_tournament = model.predict(X_tournament)[:, 0]
@@ -126,14 +132,16 @@ def make_predictions(PATH,n_round,with_preprosessing=False):
 
     joined.to_csv(f"{PATH}/{TOURNAMENT_NAME}_resnet_{pre}_preprosessing_submission.csv", index=False)
 
+    return "Done!"
 
 @click.command()
-@click.argument("n_round")
-def main(n_round):
+@click.option("--n_round")
+@click.option("--preprosessing")
+def main(n_round, preprosessing):
     init = time.time()
     PATH = f'../../submission/round {n_round}/autoencoder'
     os.makedirs(exist_ok=True, name=PATH)
-    result = make_predictions(PATH,n_round)
+    result = make_predictions(PATH,n_round, preprosessing)
     final = time.time()
     total = final-init
     print(result + total)

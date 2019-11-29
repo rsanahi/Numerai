@@ -25,20 +25,19 @@ def load_data(n_round, save=True, with_preprosessing=False):
         save_memo(df_test, features)
     return df_train, df_test, features
 
-def load_proses_data(n_round, feather=True, preprocessing=False):
+def load_proses_data(n_round, preprocessing=False):
     data_train_name = "numerai_training_preprosessing_data.csv"
     data_tournament_name = "numerai_tournament_preprosessing_data.csv"
-    if feather:
-        print("Reading Normal(feather) Data")
-        df = pd.read_feather(f"../../../raw_data/round {n_round}/train-tmp")
-        tournament = pd.read_feather(f"../../../raw_data/round {n_round}/tournament-tmp")
-        features = [c for c in df if c.startswith("feature")]
-        return df, tournament, features
-
-    elif preprocessing:
+    if preprocessing:
         print("Reading Proses data")
         df = pd.read_csv(f'../../../raw_data/round {n_round}/{data_train_name}', header=0)
         tournament = pd.read_csv(f'../../../raw_data/round {n_round}/{data_tournament_name}',header = 0)
+        features = tournament.columns.drop(['Unnamed: 0', 'era', 'data_type', 'target_kazutsugi', 'id'])
+        return df, tournament, features
+    else:
+        print("Reading Normal(feather) Data")
+        df = pd.read_feather(f"../../../raw_data/round {n_round}/train-tmp")
+        tournament = pd.read_feather(f"../../../raw_data/round {n_round}/tournament-tmp")
         features = [c for c in df if c.startswith("feature")]
         return df, tournament, features
 
