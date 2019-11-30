@@ -21,6 +21,9 @@ def make_preprosessing(PATH,n_round):
     print("Train data pca preprosessing")
     pca_data, pca = PCA_preprosessing(train_data, feature_groups, features)
 
+    train_era = train_data.era
+    train_data_type = train_data.data_type
+
     print("Train data Autoencoder feature reduction")
     input_size = 310
     code_size = 50
@@ -45,8 +48,8 @@ def make_preprosessing(PATH,n_round):
     encoded_train = pd.DataFrame(reduce_feature.predict(train_data[features]))
     encoded_train = encoded_train.add_prefix('feature_')
 
-    df = pd.concat([encoded_train,pca_data, train_data['target_kazutsugi'], train_data.era], axis=1)
-    features_preprosessing = df.columns.drop('era')
+    df = pd.concat([encoded_train, train_data_type, train_era ,pca_data, train_data['target_kazutsugi']], axis=1)
+    features_preprosessing = df.columns.drop(['data_type', 'era'])
 
     df = pd.DataFrame(save_memo(df,features_preprosessing))
 
@@ -60,18 +63,20 @@ def make_preprosessing(PATH,n_round):
     tournament_data = pd.read_feather(f"../../../raw_data/round {n_round}/tournament-tmp")
     tournament_data_type = tournament_data.data_type
     tournament_id = tournament_data.id
+    tournament_target = tournament_data['target_kazutsugi']
     tournament_era = tournament_data.era
-    tournament_target = tournament_data.target_kazutsugi
 
     print("Tournament data pca preprosessing")
-    pca_data, _= PCA_preprosessing(tournament_data, feature_groups, features, pca)
+    pca_data, _ = PCA_preprosessing(tournament_data, feature_groups, features, pca)
 
     print("Tournament data Autoencoder feature reduction")
     encoded_tournament = pd.DataFrame(reduce_feature.predict(tournament_data[features]))
     encoded_tournament = encoded_tournament.add_prefix('feature_')
 
-    tournament = pd.concat([tournament_id, tournament_era, tournament_data_type, encoded_tournament, pca_data, tournament_target], axis=1)
+    print("Concat")
+    tournament = pd.concat([tournament_id, tournament_era, tournament_data_type, encoded_tournament,pca_data,tournament_target], axis=1)
 
+    print("dataframer")
     df = pd.DataFrame(save_memo(tournament,features_preprosessing))
 
     print("Saving tournament data with preprosessing")
