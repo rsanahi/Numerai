@@ -7,26 +7,6 @@ TOURNAMENT_NAME = "kazutsugi"
 TARGET_NAME = f"target_{TOURNAMENT_NAME}"
 PREDICTION_NAME = f"prediction_{TOURNAMENT_NAME}"
 
-class Metrics(Callback):
-    def on_train_begin(self, logs={}):
-        self.mae = []
-        self.r2 = []
-    def on_epoch_end(self, epoch, logs={}):
-        X_val, y_val = self.validation_data[:2]
-        y_pred = self.model.predict(X_val)
-        
-        _mae = mean_absolute_error(y_val, y_pred)
-        _r2 = r2_score(y_val, y_pred)
-
-        self.mae.append(_mae)
-        self.r2.append(_r2)
-
-
-        print(f"- val_mae: {_mae:.4f}",
-             f'- r2: {_r2}')
-
-        return
-
 def identity_block(X, hidden_layers=1):
     X = Dense(hidden_layers)(X)
 
@@ -35,7 +15,7 @@ def identity_block(X, hidden_layers=1):
 def linear_block(X, hidden_layers=1):
  
     X_shortcut = X
-    X = Dense(hidden_layers)(X)
+    X = Dense(hidden_layers)(X_shortcut)
     X = PReLU()(X)
     X = BatchNormalization()(X)
     X = Dropout(0.1)(X)
@@ -78,21 +58,19 @@ def ResNet(input_shape = (310,), classes=1):
     return model
 
 def train_model(X_train, y_train, X_val, y_val):
-    opt = Adam(lr=0.001)
+    opt = RMSprop()
     model = ResNet()
-    model.compile(optimizer=RMSprop(), loss='mse')
-    er = EarlyStopping(patience=15, min_delta=1e-4, restore_best_weights=True, monitor='val_loss')
+    model.compile(optimizer=opt, loss='mse')
+    er = EarlyStopping(patience=8, min_delta=1e-4, restore_best_weights=True, monitor='val_loss')
     model.fit(X_train, y_train, epochs=10, callbacks=[er], validation_data=[X_val, y_val], batch_size=1024)
     return model
 
 def make_predictions(PATH,n_round,with_preprosessing=False):
     pre = "whit" if with_preprosessing else "without"
     print(f"Working with round: {n_round}")
-    train_data, tournament_data, features = load_data(n_round, with_preprosessing)
+    train_data, tournament_data, features = load_proses_data(n_round, feather=True, preprocessing=False)
     validation_data = tournament_data[tournament_data.data_type == "validation"]
     ids = tournament_data['id']
-
-    resnet_metrics = Metrics()
 
     X_train = train_data[features]
     y_train = train_data[TARGET_NAME]
@@ -154,7 +132,8 @@ def main(n_round):
     init = time.time()
     PATH = f'../../submission/round {n_round}/autoencoder'
     os.makedirs(exist_ok=True, name=PATH)
-    result = make_predictions(PATH,n_round)
+    whith_pre = False
+    result = make_predictions(PATH,n_round, whith_pre)
     final = time.time()
     print(result+ f': {final-init}')
 

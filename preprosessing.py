@@ -7,14 +7,13 @@ from utils.models import *
 def make_preprosessing(PATH,n_round):
     print(f"Working with round: {n_round}")
     train_data, tournament_data, features = load_data(n_round)
-    train_ids = train_data.id
 
     feature_groups = {
         g: [c for c in train_data if c.startswith(f"feature_{g}")]
         for g in ["intelligence", "wisdom", "charisma", "dexterity", "strength", "constitution"]
         }
     train_data.to_feather(f'../../../raw_data/round {n_round}/train-tmp')
-    tournament_data(f"../../../raw_data/round {n_round}/tournament-tmp")
+    tournament_data.to_feather(f"../../../raw_data/round {n_round}/tournament-tmp")
 
     del tournament_data
     gc.collect()
@@ -46,29 +45,32 @@ def make_preprosessing(PATH,n_round):
     encoded_train = pd.DataFrame(reduce_feature.predict(train_data[features]))
     encoded_train = encoded_train.add_prefix('feature_')
 
-    df = pd.concat([encoded_train,pca_data, train_data['target_kazutsugi']], axis=1)
-    features_preprosessing = df.columns
+    df = pd.concat([encoded_train,pca_data, train_data['target_kazutsugi'], train_data.era], axis=1)
+    features_preprosessing = df.columns.drop('era')
 
     df = pd.DataFrame(save_memo(df,features_preprosessing))
 
     print("Saving train data with preprosessing")
     df.to_csv(f'../../../raw_data/round {n_round}/numerai_training_preprosessing_data.csv')
 
+    del df
     del train_data
     gc.collect()
 
     tournament_data = pd.read_feather(f"../../../raw_data/round {n_round}/tournament-tmp")
     tournament_data_type = tournament_data.data_type
     tournament_id = tournament_data.id
+    tournament_era = tournament_data.era
+    tournament_target = tournament_data.target_kazutsugi
 
     print("Tournament data pca preprosessing")
-    pca_data = PCA_preprosessing(tournament_data, feature_groups, features, pca)
+    pca_data, _= PCA_preprosessing(tournament_data, feature_groups, features, pca)
 
     print("Tournament data Autoencoder feature reduction")
     encoded_tournament = pd.DataFrame(reduce_feature.predict(tournament_data[features]))
     encoded_tournament = encoded_tournament.add_prefix('feature_')
 
-    tournament = pd.concat([tournament_id, tournament_data_type, encoded_tournament,pca_data], axis=1)
+    tournament = pd.concat([tournament_id, tournament_era, tournament_data_type, encoded_tournament, pca_data, tournament_target], axis=1)
 
     df = pd.DataFrame(save_memo(tournament,features_preprosessing))
 
