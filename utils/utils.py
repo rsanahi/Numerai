@@ -25,7 +25,7 @@ def load_data(n_round, save=True, with_preprosessing=False):
         save_memo(df_test, features)
     return df_train, df_test, features
 
-def load_proses_data(n_round, preprocessing=False):
+def load_proses_data(n_round, preprocessing):
     data_train_name = "numerai_training_preprosessing_data.csv"
     data_tournament_name = "numerai_tournament_preprosessing_data.csv"
     if preprocessing:
@@ -127,6 +127,31 @@ def check_correlation_consistency(model,valid_data, metric, features, target, ve
     print(f'{count_consistent} de {count}')
     return metric_val,(count_consistent/count)
 
+def check_correlation_consistency_lgbm(model,valid_data, metric, features, target, verbose=0):
+    eras = valid_data.era.unique()
+    count = 0
+    count_consistent = 0
+    metric_val = []
+    for era in eras:
+        count += 1
+        current_valid_data = valid_data[valid_data.era==era]
+        X_valid = current_valid_data[features]
+        Y_valid = current_valid_data[target]
+        y_prediction = model.predict(X_valid)
+        probabilities = y_prediction
+        m = metric(Y_valid, probabilities)
+        metric_val.append(m)
+        if (m > 0.02):
+            consistent = True
+            count_consistent += 1
+        else:
+            consistent = False
+        if verbose:
+            print(str(era),": loss - "+str(m), "consistent: "+str(consistent))
+    print (f"Consistency {count_consistent}/{count}: {count_consistent/count}")
+    print(f'{count_consistent} de {count}')
+    return metric_val,(count_consistent/count)
+
 def PCA_preprosessing(X, feature_groups, features, pca=None):
     if pca:
         pca_ = pca
@@ -145,3 +170,41 @@ def PCA_preprosessing(X, feature_groups, features, pca=None):
         all_components = pd.concat([all_components, components],axis=1)
 
     return all_components, pca_
+
+class KFoldEra():
+    """
+    K-Folds cross-validator
+    Provides train/test indices to split data in train/test sets using era
+    Parameters
+    ----------
+    n_splits : int, default=3.
+        Number of folds.
+    shuffle : boolean, default=False
+        Wheather to shuffle the data before splitting into batches. 
+    seed : int, default=123
+        seed used by the random number generator
+    """
+
+    def __init__(self, n_splits: int = 3, shuffle: bool = False, seed: int = 123):
+        self.n_splits = n_splits
+        self.shuffle = shuffle
+        self.seed = seed
+
+    def split(self, df, y=None, groups=None):
+        """
+        re-using KFold implementation from sklearn
+        """
+        unique_eras = df["era"].unique()
+        kf = KFold(n_splits=self.n_splits, shuffle=self.shuffle,
+                   random_state=self.seed)
+        folds = []
+        for train_index_era, test_index_era in kf.split(unique_eras):
+            train_era = unique_eras[train_index_era]
+            test_era = unique_eras[test_index_era]
+            # finding indices in the data set
+            train_index = df["era"].isin(train_era)
+            test_index = df["era"].isin(test_era)
+            train_idx = np.flatnonzero(train_index)
+            test_idx = np.flatnonzero(test_index)
+            folds.append((train_idx, test_idx))
+        return folds
