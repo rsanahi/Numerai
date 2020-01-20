@@ -60,9 +60,9 @@ def ResNet(input_shape = (310,), layers=[310,100,50,25], classes=1):
     return model
 
 def train_model(X_train, y_train, X_val, y_val, layers):
-    opt = Adam(lr=0.001)
+    opt = RMSprop(lr=0.003, decay=0.0)
     model = ResNet(input_shape=(X_train.shape[1],), layers=layers)
-    model.compile(optimizer=RMSprop(learning_rate=0.003, decay = 1e-4), loss='mse')
+    model.compile(optimizer=opt, loss='mse')
     er = EarlyStopping(patience=15, min_delta=1e-4, restore_best_weights=True, monitor='val_loss')
     model.fit(X_train, y_train, epochs=10, callbacks=[er], validation_data=[X_val, y_val], batch_size=1024)
     return model
@@ -144,7 +144,7 @@ def main(n_round, preprosessing):
     result = make_predictions(PATH,n_round, preprosessing)
     final = time.time()
     total = final-init
-    print(result + total)
+    print(f'{result}; {total}')
 
 
 if __name__ == "__main__":
