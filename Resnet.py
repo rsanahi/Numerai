@@ -118,7 +118,7 @@ def make_predictions(PATH,n_round,with_preprosessing=False):
     print(f"Correlation score of validation data: {correlation_valid_score}")
 
     me, con = check_correlation_consistency(model,train_data,correlation_score, features=features, target=TARGET_NAME)
-    basic_plot(me,title=f'consistency of train data ({pre}_preprosessing): {con}',margin=[0.02, 0.002], save=True, path=PATH)
+    basic_plot(me,title=f'consistency of train data ({pre}_preprosessing): {con}',margin=[0.02, 0.002], save=False, path=PATH)
 
     me, con = check_correlation_consistency(model,validation_data,correlation_score, features=features, target=TARGET_NAME)
     basic_plot(me,title=f'consistency of valid data ({pre}_preprosessing): {con}',margin=[0.02, 0.002], save=True, path=PATH)
@@ -141,6 +141,9 @@ def main(n_round, preprosessing):
     init = time.time()
     PATH = f'../../submission/round {n_round}/autoencoder'
     os.makedirs(exist_ok=True, name=PATH)
+
+    if preprosessing.lower() == "true": preprosessing=True 
+    else: preprosessing=False
     result = make_predictions(PATH,n_round, preprosessing)
     final = time.time()
     total = final-init
